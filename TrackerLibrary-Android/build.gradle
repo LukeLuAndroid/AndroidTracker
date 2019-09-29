@@ -1,0 +1,78 @@
+apply plugin: 'com.android.library'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
+def publishedGroupId = 'com.guuidea.plugin'
+def artifact_Id = 'tracker-android'
+def artifact_version = '0.2.6-SNAPSHOT'
+
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+repositories {
+    mavenLocal()
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    api project(':TrackerLibrary-Java')
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java' // 指定源码目录
+        }
+        resources {
+            srcDir 'src/main/res' //资源目录
+        }
+    }
+}
+
+task sourceJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+uploadArchives {
+//    configuration = configurations.archives
+    repositories {
+        mavenDeployer {
+            snapshotRepository(url: "${project.ext.snapshotUrl}") {
+                authentication(userName: "${project.ext.mavenName}", password: "${project.ext.mavenPass}")
+            }
+
+            repository(url: "${project.ext.mavenUrl}") {
+                authentication(userName: "${project.ext.mavenName}", password: "${project.ext.mavenPass}")
+            }
+
+            pom.project {
+                groupId publishedGroupId
+                artifactId artifact_Id
+                version artifact_version
+                packaging 'aar'
+                description 'tracker android library'
+            }
+//            pom.whenConfigured { pom ->
+//                def annotation = pom.dependencies.find { dep ->
+//                    dep.groupId == 'com.guuidea.annotation' && dep.artifactId == 'tracker'
+//                }
+//                pom.dependencies.remove(annotation)
+//            }
+        }
+    }
+}

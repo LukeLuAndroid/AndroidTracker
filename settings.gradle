@@ -1,0 +1,1 @@
+include ':app',':TrackerProcessor', ':TrackerAnnotation', ':TrackerLibrary-Java', ':TrackerLibrary-Android'

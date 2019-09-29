@@ -1,0 +1,133 @@
+import com.android.build.gradle.api.BaseVariant
+
+apply plugin: 'com.android.library'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
+def publishedGroupId = 'com.guuidea.plugin'
+def artifact_Id = 'tracker-java'
+def artifact_version = '0.2.7-SNAPSHOT'
+
+android {
+    compileSdkVersion 28
+    useLibrary 'org.apache.http.legacy'
+
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java' // 指定源码目录
+        }
+        resources {
+            srcDir 'src/main/res' //资源目录
+        }
+    }
+}
+
+task sourceJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId publishedGroupId
+            artifactId artifact_Id
+            artifact_version = "local.local"
+            version artifact_version
+            pom.packaging 'aar'
+            artifact(sourceJar) {
+                classifier = 'sources'
+            }
+
+            pom.withXml {
+                def root = asNode()
+                def dependenciesNode = root.appendNode('dependencies')
+                project.configurations.collectMany { it.allDependencies }.toSet().findAll {
+                    it instanceof ProjectDependency || it instanceof ExternalModuleDependency
+                }.each { dep ->
+                    println("dep=" + dep)
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', dep.getGroup())
+                    dependencyNode.appendNode('artifactId', dep.getName())
+                    dependencyNode.appendNode('version', dep.getVersion())
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    api project(':TrackerAnnotation')
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            snapshotRepository(url: "${project.ext.snapshotUrl}") {
+                authentication(userName: "${project.ext.mavenName}", password: "${project.ext.mavenPass}")
+            }
+
+            repository(url: "${project.ext.mavenUrl}") {
+                authentication(userName: "${project.ext.mavenName}", password: "${project.ext.mavenPass}")
+            }
+
+            pom.project {
+                groupId publishedGroupId
+                artifactId artifact_Id
+                version artifact_version
+                packaging 'aar'
+                description 'tracker java library'
+            }
+//            pom.whenConfigured { pom ->
+//                def annotation = pom.dependencies.find { dep ->
+//                    dep.groupId == 'com.guuidea.annotation' && dep.artifactId == 'tracker'
+//                }
+//                pom.dependencies.remove(annotation)
+//            }
+        }
+    }
+}
+
+builder {
+    variant { BaseVariant var, v ->
+
+        def t = task([type: Jar], 'buildJar' + v, {
+            dependsOn 'assemble' + v
+            group 'sdk'
+            from var.javaCompile.destinationDir
+        })
+
+        configurations.create("jarOutput" + v)
+        artifacts.add("jarOutput" + v, t)
+
+        task([type: upload.class], 'uploadTo' + v) {
+            group 'sdk'
+
+            pom {
+                packaging = 'jar'
+                groupId = publishedGroupId
+                artifactId = artifact_Id
+                ver artifact_version
+            }
+
+            configuration = configurations["jarOutput" + v]
+        }
+    }
+}
