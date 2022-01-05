@@ -114,7 +114,7 @@ public class TraceLog extends TempleteLog implements Parcelable {
     public boolean equals(Object obj) {
         if (obj != null && obj instanceof TraceLog) {
             TraceLog other = (TraceLog) obj;
-            if (mLogId == ((TraceLog) obj).getId()) {
+            if (mLogId == other.getId()) {
                 if (logTime != null && logTime.equals(other.getLogTime())) {
                     if (threadName != null && threadName.equals(other.getThreadName())) {
                         if (methodInfo != null && methodInfo.equals(other.getMethodInfo())) {

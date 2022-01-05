@@ -20,7 +20,7 @@ public class Trackers {
     static final String TAG = "Trackers";
 
     private static CommandHandler handler = new CommandHandler();
-    private static boolean isDebug = false;
+    private boolean isDebug = false;
     private TrackerAddListener trackerAddListener;
     private TrackerUploadListener trackerUploadListener;
     private TrackerStoreListener trackerStoreListener;
@@ -29,17 +29,15 @@ public class Trackers {
     private Strategy DEFAULT_STRATEGY = new Strategy();
     private Strategy strategy;
 
-    private static Trackers _instance;
+    private static class SingleTonHolder {
+        private static final Trackers INSTANCE = new Trackers();
+    }
 
     public static Trackers instance() {
-        if (_instance == null) {
-            synchronized (Trackers.class) {
-                if (_instance == null) {
-                    _instance = new Trackers();
-                }
-            }
-        }
-        return _instance;
+        return SingleTonHolder.INSTANCE;
+    }
+
+    private Trackers() {
     }
 
     public Trackers setTrackerAddListener(TrackerAddListener listener) {

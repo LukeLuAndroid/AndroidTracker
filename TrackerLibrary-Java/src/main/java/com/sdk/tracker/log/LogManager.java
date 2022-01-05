@@ -16,9 +16,6 @@ public class LogManager {
         return LogManager.Singleton._instance;
     }
 
-
-    private Map<String, Map<String, List<String>>> logMapping = new HashMap<>();
-
     private List<TraceLog> currentLogs = new ArrayList<>();
 
     public List<TraceLog> getCurrentLogs() {

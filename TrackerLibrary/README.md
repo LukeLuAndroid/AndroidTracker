@@ -1,1 +1,0 @@
--keep public class com.guuidea.tracker.log.TraceLog

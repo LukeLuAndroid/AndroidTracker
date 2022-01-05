@@ -6,9 +6,9 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
 
-def publishedGroupId = 'com.guuidea.annotation'
+def publishedGroupId = 'com.sdk.annotation'
 def artifact_Id = 'tracker'
-def artifact_version = '0.0.7-SNAPSHOT'
+def artifact_version = '0.0.1-SNAPSHOT'
 
 task sourceJar(type: Jar) {
     classifier = 'sources'

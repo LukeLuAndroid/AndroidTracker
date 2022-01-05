@@ -78,10 +78,11 @@ public class TrackerUtils {
 
         JSONArray threadArray = new JSONArray();
         try {
-            for (String key : logMapping.keySet()) {
+            for (Map.Entry<String,Map<String, List<String>>> entry: logMapping.entrySet()) {
+                String key = entry.getKey();
                 JSONObject threadJson = new JSONObject();
                 threadJson.put("threadName", key);
-                Map<String, List<String>> times = logMapping.get(key);
+                Map<String, List<String>> times = entry.getValue();
                 JSONArray timeArray = new JSONArray();
                 for (String timeKey : times.keySet()) {
                     JSONObject timeJson = new JSONObject();

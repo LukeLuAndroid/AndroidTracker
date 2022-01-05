@@ -106,11 +106,12 @@ public class TrackerStoreHelper {
             if (context != null) {
                 SharedPreferences sp = ContextGetter.getContext().getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
 
-                Set<String> sets = commands.keySet();
+                Set<Map.Entry<String,List<String>>> sets = commands.entrySet();
                 try {
                     JSONObject result = new JSONObject();
-                    for (String key : sets) {
-                        List<String> items = commands.get(key);
+                    for (Map.Entry<String,List<String>> entry : sets) {
+                        String key = entry.getKey();
+                        List<String> items = entry.getValue();
                         JSONArray array = new JSONArray();
                         if (items != null && !items.isEmpty()) {
                             JSONObject jsonObject;

@@ -1,43 +1,88 @@
-项目名:自动埋点
-
-项目介绍:
+# 项目介绍:
     通过插装方法，实现自动埋点，在需要获取方法信息的时候，可通过服务端下发指令，
     来根据方法的参数和返回值来判断方法中可能存在的问题。
 
-使用方式:
+## 一.添加依赖
+```
+implementation project(':TrackerLibrary-Android')
+annotationProcessor project(':TrackerProcessor')
+```
+android平台可选择android和java两个版本，java平台则只能用java版本(有且只需使用一个版本)
 
-一.添加依赖
-annotationProcessor  project(':TrackerAnnotation')
-implementation project(':Tracker-Android')  //android
 
-二.初始化，在application中添加如下初始化，addTracker用来表示需要添加的埋点，uploadLogInfo用来自定义上传接口。
+## 二.初始化，在application中添加如下初始化，addTracker用来表示需要添加的埋点，uploadLogInfo用来自定义上传接口。
 如果addTracker返回true则不会执行uploadLogInfo方法,当返回false的时候，下次进入app会统一请求uploadLogInfo，并根据listener判断上传失败或成功
 
+当前抽出数据的存储方式,app可以自定义数据存储和指令存储的方式，通过setTrackerStoreListener()来自定义
+
+```
 Trackers.instance().setTrackerAddListener(new TrackerAddListener() {
     @Override
     public boolean addTracker(String className, String methodName,String tag，Object... args) {
         return false;
     }
-}).setTrackerUploadListener(new DefaultTrackerUploadListener() {
+}).setTrackerUploadListener(new TrackerUploadListener() {
     @Override
     public void uploadLogInfo(List<TraceLog> list, TrackerResultListener listener) {
-        super.uploadLogInfo(list, listener);
-        String json = TrackerUtils.getTraceLogJson(list);
-        if(listener!=null){
-            listener.onSuccess();
-        }
+
     }
 }).setDebug(BuildConfig.DEBUG).init();
+```
 
+如果需要自定义数据存储则可设置
+```
+Trackers.instance().setTrackerStoreListener(new TrackerStoreListener() {
+     @Override
+     public Map<String, List<String>> getAllCommand() {
+         return null;
+     }
 
-三.在需要的类或方法上用Tracker去注解，同时Tracker有几个参数可选
+     @Override
+     public void restoreGroup(List<String> list) {
+
+     }
+
+     @Override
+     public List<String> getAllPermitGroup() {
+         return null;
+     }
+
+     @Override
+     public void restoreCommand(Map<String, List<String>> map) {
+
+     }
+
+     @Override
+     public void addTraceLog(TraceLog traceLog) {
+
+     }
+
+     @Override
+     public List<TraceLog> queryLogs() {
+         return null;
+     }
+
+     @Override
+     public int queryCountByLog(TraceLog traceLog) {
+         return 0;
+     }
+
+     @Override
+     public void removeLogs(List<TraceLog> list) {
+
+     }
+   });
+```
+
+## 三.在需要的类或方法上用Tracker去注解，同时Tracker有几个参数可选
 1.enable  是否开启
 2.group  当前所属分组
 3.tag  标签信息
 4.injectorType  所用的注解方法(暂时不需要修改,只支持InjectType.DEFAULT)
 5.injectRule 使用方法 injectRule = @InjectRule(regex = "method+\\d*")
 
-四.举一个例子
+## 四.举一个例子
+```
 @Tracker
 public class Server extends BaseServer {
     public Server() {
@@ -55,9 +100,11 @@ public class Server extends BaseServer {
         return '1';
     }
 }
+```
 
 这个例子中 getSomeThings()方法会得到注入,getSomeThingsUnTracker()方法则不会,(后续会添加配置规则功能)
 得到的效果是:
+```
 public String[] getSomeThings() {
     if (TrackerDefaultInjector.isEnable("com.guuidea.tracker.Server", "getSomeThings", new String[0], new String[0], new Object[0])) {
         TrackerDefaultInjector.insertFront(this, "com.guuidea.tracker.Server", "getSomeThings", new String[0], new String[0], "", new Object[0]);
@@ -69,6 +116,7 @@ public String[] getSomeThings() {
     }
     return (String[])((String[])tt);
 }
+```
 
 isEnable方法的参数说明：
 1.类名
@@ -90,8 +138,9 @@ insertBack方法和insertFront参数说明方法的区别是
 insertBack在倒数第二参数多了一个返回值，该例子上就多了一个tt，如果该方法有返回值则返回结果，没有则返回null
 
 
-五.关于获取属性对象
+## 五.关于获取属性对象
 
+```
  Command.instance().openGroup(group); //打开权限  只是打开权限 可以获取log
  Command.instance().addCommand("com.guuidea.tracker.Server.getSomeThings()", "before#getLog#");
   //在方法执行之前获取log
@@ -109,18 +158,21 @@ insertBack在倒数第二参数多了一个返回值，该例子上就多了一�
  public static final String GET_ARGS = "getArgs";  //方法前后都可以
  //类的属性
  public static final String GET_PROP = "getProp";  //方法前后都可以
+```
 
-
-6.关于配置规则
+## 六.关于配置规则
 新增@InjectRule，它有一个isMainRule的属性，表示是否主rule，默认false就好
 
 在app中新建一个类或者用在application上加一个注解如下：
+```
 @InjectRule(regex = "^test+\\w*", attrs = {Modifier.PUBLIC},isMainRule = true)
 public class MainApplication extends Application {
 }
+```
 这样表示匹配名字为test开头的方法名，且方法为PUBLIC属性，同时有效
 
 除了主规则外,其他情况@InjectRule不可以单独使用，需配合@Tracker使用如下：
+```
 @Tracker(injectRule = @InjectRule(regex = "onCreate"))
 public class MainActivity extends AppCompatActivity {
     @Override
@@ -128,24 +180,39 @@ public class MainActivity extends AppCompatActivity {
     }
 }
 
+```
+
 regex:表示正则匹配
 Modifier:目前支持的修饰符有
 PUBLIC,PROTECTED,PRIVATE,ABSTRACT,STATIC,FINAL
 
 如果同时存在主rule和当前rule，则以当前rule为准。
 
-7.支持第匿名类(在正常类下的第一层匿名类),比如:
- 1.mTvAdd.setOnClickListener(new View.OnClickListener() {
+## 七.支持第匿名类(在正常类下的第一层匿名类),比如:
+    * 1.
+    ```
+    mTvAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
             }
         });
-则插装路径可能需要根据获取getClass()方法来判断真实路径
+    ```
+则插装路径信息为：com.guuidea.tracker.MainActivity.onCreate.mTvAdd.onClick1
+按照第五条获取参数信息的时候可以用
+Command.instance().addCommand("com.guuidea.tracker.MainActivity.onCreate.mTvAdd.onClick(v)", "before#getLog#");
 
+    * 2.
+    ```
+    new Handler().postDelay(new Runnable(){
+       public void run(){
+       }
+    });
+    ```
+则插装路径信息为：com.guuidea.tracker.MainActivity.onCreate.new Handler().run0
 注意：匿名类的方法插装需要在父类的基础上添加注解，本身不支持注解
 
-
-8. 关于插装与否的判定，当前方法或类的颗粒度越小，权限越大，即
+## 八. 关于插装与否的判定，当前方法或类的颗粒度越小，权限越大，即
+```
  @Tracker(injectRule = @InjectRule(regex = "test"))
  private class SearchClass {
     @Tracker()
@@ -156,17 +223,43 @@ PUBLIC,PROTECTED,PRIVATE,ABSTRACT,STATIC,FINAL
         }
     }
  }
+ ```
 
-这个例子中KeyListener的注解@Tracker优先级高于SearchClass的注解，所以onKey方法还是会被插装
+ 这个例子中KeyListener的注解@Tracker优先级高于SearchClass的注解，所以onKey方法还是会被插装
 
-10.添加了一些工具类在TrackerUtils中，以及一些callback类中添加两个默认定义的addListener和UploadListener的方法处理分别为
+## 九.高级自定义，现在可以自定义设置定义TrackerNode
+```
+Trackers.instance().setTrackerNodeProvider(new TrackerNodeProvider() {
+    @Override
+    public TrackerNode newInstance(Object o, String s, String s1, String[] strings, String[] strings1, String s2, String s3, Object... objects) {
+        return null;
+    }
+
+    @Override
+    public TrackerNode newInstance(Tracker tracker, Object o, String s, String s1, String[] strings, String[] strings1, String s2, Method method, Object... objects) {
+        return null;
+    }
+})
+```
+TrackerNode主要包括三个方法：
+```
+  public abstract Object getParameter(String name, String def);
+
+  public abstract TrackerInvoker invoker(Object input);
+
+  public abstract void execute(String script, String type, Object result, Object... args);
+```
+
+其中execute方法会执行指令的时候会执行，invoker方法在针对反射注入法的时候会执行
+
+## 十.添加了一些工具类在TrackerUtils中，以及一些callback类中添加两个默认定义的addListener和UploadListener的方法处理分别为
 RocketChatCallBack、RocketChatCallBackWithOutToken和DefaultUploadListenerImpl、RockerChatUploaderImpl
 
 
-添加混淆规则
+## 十一. 添加混淆规则
 -keep public class com.sdk.tracker.Trackers
 -keep public class com.sdk.tracker.log.TraceLog
 -keep public class com.sdk.annotation.*{*;}
--keep public class com.sdk.tracker.listener.*{*;}
+-keep public class com.sdk.tracker.db.listener.*{*;}
 
 

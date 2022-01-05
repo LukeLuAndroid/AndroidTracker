@@ -1,0 +1,63 @@
+apply plugin: 'java-library'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
+def publishedGroupId = 'com.sdk.plugin'
+def artifact_Id = 'processor'
+def artifact_version = '0.0.1-SNAPSHOT'
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation project(':TrackerAnnotation')
+}
+
+task sourceJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+//本地
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId publishedGroupId
+            artifactId artifact_Id
+            artifact_version = "local.local"
+            version artifact_version
+            from components.java
+            pom.packaging 'aar'
+            artifact(sourceJar) {
+                classifier = 'sources'
+            }
+        }
+    }
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            snapshotRepository(url: "${project.ext.snapshotUrl}") {
+                authentication(userName: "${project.ext.mavenName}", password: "${project.ext.mavenPass}")
+            }
+
+            repository(url: "${project.ext.mavenUrl}") {
+                authentication(userName: "${project.ext.mavenName}", password: "${project.ext.mavenPass}")
+            }
+
+            pom.project {
+                groupId publishedGroupId
+                artifactId artifact_Id
+                version artifact_version
+                packaging 'aar'
+                description 'tracker processor'
+            }
+        }
+    }
+}
+
+artifacts {
+    archives sourceJar
+}
+
+sourceCompatibility = "8"
+targetCompatibility = "8"

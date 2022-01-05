@@ -1,6 +1,7 @@
 package com.sdk.tracker.callback;
 
 import android.os.Looper;
+import android.util.Log;
 
 import com.sdk.tracker.TrackerAddListener;
 import com.sdk.tracker.Trackers;
@@ -31,6 +32,7 @@ import java.util.Set;
  * 需要传用户名密码，发给自己
  */
 public class RocketChatCallBack implements TrackerAddListener {
+    private static final String TAG = "RocketChatCallBack";
     private static final String CHANNEL = "#tracker-channel";
     private String userName;
     private String password;
@@ -59,13 +61,24 @@ public class RocketChatCallBack implements TrackerAddListener {
         return false;
     }
 
-    //发送消息到rocketchat
+    /**
+     * 发送消息到rocketchat
+     * @param className
+     * @param methodName
+     * @param args
+     */
     private void sendMessageToRocketChat(String className, String methodName, Object[] args) {
         String message = getMethodInfo(className, methodName, args);
         postMessage(mUserId + mUserId, message);
     }
 
-    //获取消息的日志
+    /**
+     * 获取消息的日志
+     * @param methodClass
+     * @param methodName
+     * @param args
+     * @return
+     */
     String getMethodInfo(String methodClass, String methodName, Object[] args) {
         StringBuilder buffer = new StringBuilder(methodClass);
         buffer.append(".").append(methodName).append("(");
@@ -94,7 +107,7 @@ public class RocketChatCallBack implements TrackerAddListener {
         if (mAuthToken == null || mUserId == null) {
             isLoading = true;
 
-            Map<String, String> params = new HashMap<>();
+            Map<String, String> params = new HashMap<>(2);
             params.put("user", userName);
             params.put("password", password);
             Map<String, String> headers = new HashMap<>();
@@ -110,7 +123,7 @@ public class RocketChatCallBack implements TrackerAddListener {
                             mUserId = data.optString("userId", "");
                             mAuthToken = data.optString("authToken", "");
                         }
-                        System.out.println(message);
+                        Log.d(TAG,"messgae="+message);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -136,7 +149,7 @@ public class RocketChatCallBack implements TrackerAddListener {
                         if (room != null) {
                             mRoomId = room.optString("_id", "");
                         }
-                        System.out.println(message);
+                        Log.d(TAG,"messgae="+message);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -158,7 +171,7 @@ public class RocketChatCallBack implements TrackerAddListener {
             requestOnThread("http://appguuidea.8866.org:3000/api/v1/chat.postMessage", params, headers, new CallBack() {
                 @Override
                 public void onResponse(HttpResponse response, int code, String message) {
-                    System.out.println(message);
+                    Log.d(TAG,"messgae="+message);
                 }
             });
         }

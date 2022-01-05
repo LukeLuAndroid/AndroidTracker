@@ -18,6 +18,8 @@ public class RocketChatUploaderImpl extends RocketChatCallBackWithOutToken imple
                 postMessage(list.get(i).toString());
             }
         }
-        listener.onSuccess();
+        if (listener != null) {
+            listener.onSuccess();
+        }
     }
 }

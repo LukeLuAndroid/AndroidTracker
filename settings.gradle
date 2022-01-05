@@ -1,1 +1,3 @@
-include ':app',':TrackerProcessor', ':TrackerAnnotation', ':TrackerLibrary-Java', ':TrackerLibrary-Android'
+rootProject.name = "BasicTrackerWork"
+include ':app'
+include ':TrackerProcessor', ':TrackerAnnotation', ':TrackerLibrary-Java', ':TrackerLibrary-Android'

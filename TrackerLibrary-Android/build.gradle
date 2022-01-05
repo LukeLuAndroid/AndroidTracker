@@ -2,9 +2,9 @@ apply plugin: 'com.android.library'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
-def publishedGroupId = 'com.guuidea.plugin'
+def publishedGroupId = 'com.sdk.plugin'
 def artifact_Id = 'tracker-android'
-def artifact_version = '0.2.6-SNAPSHOT'
+def artifact_version = '0.0.1-SNAPSHOT'
 
 android {
     compileSdkVersion 28
